@@ -1,0 +1,27 @@
+# ===== Python (ai-service) =====
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+*.pth
+*.pth.tar
+ai-service/weights/*
+!ai-service/weights/.gitkeep
+
+# ===== Node (backend) =====
+backend/node_modules/
+backend/.env
+backend/npm-debug.log
+
+# ===== React (frontend) =====
+frontend/node_modules/
+frontend/.env
+frontend/build/
+frontend/dist/
+
+# ===== General =====
+.DS_Store
+*.log
+uploads/
+frames/
