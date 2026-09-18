@@ -1,0 +1,112 @@
+frame,video_time_sec,yolo_raw_count,source,final_count,status,mode,reason,mode_changed
+0,0.00,10,YOLO,10,Safe,YOLO,none,False
+3,0.10,7,YOLO,7,Safe,YOLO,none,False
+6,0.20,8,YOLO,8,Safe,YOLO,none,False
+9,0.30,5,YOLO,5,Safe,YOLO,none,False
+12,0.40,6,YOLO,6,Safe,YOLO,none,False
+15,0.50,4,YOLO,4,Safe,YOLO,none,False
+18,0.60,6,YOLO,6,Safe,YOLO,none,False
+21,0.70,7,YOLO,7,Safe,YOLO,none,False
+24,0.80,5,YOLO,5,Safe,YOLO,none,False
+27,0.90,7,YOLO,7,Safe,YOLO,none,False
+30,1.00,6,YOLO,6,Safe,YOLO,none,False
+33,1.10,5,YOLO,5,Safe,YOLO,none,False
+36,1.20,4,YOLO,4,Safe,YOLO,none,False
+39,1.30,3,YOLO,3,Safe,YOLO,none,False
+42,1.40,5,YOLO,5,Safe,YOLO,none,False
+45,1.50,3,YOLO,3,Safe,YOLO,none,False
+48,1.60,3,YOLO,3,Safe,YOLO,none,False
+51,1.70,5,YOLO,5,Safe,YOLO,none,False
+54,1.80,6,YOLO,6,Safe,YOLO,none,False
+57,1.90,6,YOLO,6,Safe,YOLO,none,False
+60,2.00,6,YOLO,6,Safe,YOLO,none,False
+63,2.10,5,YOLO,5,Safe,YOLO,none,False
+66,2.20,6,YOLO,6,Safe,YOLO,none,False
+69,2.30,6,YOLO,6,Safe,YOLO,none,False
+72,2.40,6,YOLO,6,Safe,YOLO,none,False
+75,2.50,6,YOLO,6,Safe,YOLO,none,False
+78,2.60,7,YOLO,7,Safe,YOLO,none,False
+81,2.70,8,YOLO,8,Safe,YOLO,none,False
+84,2.80,7,YOLO,7,Safe,YOLO,none,False
+87,2.90,7,YOLO,7,Safe,YOLO,none,False
+90,3.00,7,YOLO,7,Safe,YOLO,none,False
+93,3.10,6,YOLO,6,Safe,YOLO,none,False
+96,3.20,8,YOLO,8,Safe,YOLO,none,False
+99,3.30,8,YOLO,8,Safe,YOLO,none,False
+102,3.40,6,YOLO,6,Safe,YOLO,none,False
+105,3.50,6,YOLO,6,Safe,YOLO,none,False
+108,3.60,8,YOLO,8,Safe,YOLO,none,False
+111,3.70,6,YOLO,6,Safe,YOLO,none,False
+114,3.80,6,YOLO,6,Safe,YOLO,none,False
+117,3.90,7,YOLO,7,Safe,YOLO,none,False
+120,4.00,7,CSRNet (periodic),187,Dangerous,CSRNET,periodic,True
+123,4.10,7,CSRNet (sustained),188,Dangerous,CSRNET,sustained,False
+126,4.20,7,CSRNet (sustained),190,Dangerous,CSRNET,sustained,False
+129,4.30,6,CSRNet (sustained),190,Dangerous,CSRNET,sustained,False
+132,4.40,4,CSRNet (sustained),192,Dangerous,CSRNET,sustained,False
+135,4.50,4,CSRNet (sustained),196,Dangerous,CSRNET,sustained,False
+138,4.60,4,CSRNet (sustained),195,Dangerous,CSRNET,sustained,False
+141,4.70,4,CSRNet (sustained),185,Dangerous,CSRNET,sustained,False
+144,4.80,6,CSRNet (sustained),179,Dangerous,CSRNET,sustained,False
+147,4.90,5,CSRNet (sustained),186,Dangerous,CSRNET,sustained,False
+150,5.00,7,CSRNet (sustained),186,Dangerous,CSRNET,sustained,False
+153,5.10,5,CSRNet (sustained),186,Dangerous,CSRNET,sustained,False
+156,5.20,5,CSRNet (sustained),190,Dangerous,CSRNET,sustained,False
+159,5.30,5,CSRNet (sustained),195,Dangerous,CSRNET,sustained,False
+162,5.40,3,CSRNet (sustained),182,Dangerous,CSRNET,sustained,False
+165,5.50,6,CSRNet (sustained),179,Dangerous,CSRNET,sustained,False
+168,5.60,5,CSRNet (sustained),181,Dangerous,CSRNET,sustained,False
+171,5.70,5,CSRNet (sustained),189,Dangerous,CSRNET,sustained,False
+174,5.80,6,CSRNet (sustained),186,Dangerous,CSRNET,sustained,False
+177,5.90,6,CSRNet (sustained),177,Dangerous,CSRNET,sustained,False
+180,6.00,9,CSRNet (sustained),168,Dangerous,CSRNET,sustained,False
+183,6.10,9,CSRNet (sustained),172,Dangerous,CSRNET,sustained,False
+186,6.20,7,CSRNet (sustained),181,Dangerous,CSRNET,sustained,False
+189,6.30,7,CSRNet (sustained),190,Dangerous,CSRNET,sustained,False
+192,6.40,7,CSRNet (sustained),194,Dangerous,CSRNET,sustained,False
+195,6.50,8,CSRNet (sustained),193,Dangerous,CSRNET,sustained,False
+198,6.60,7,CSRNet (sustained),198,Dangerous,CSRNET,sustained,False
+201,6.70,5,CSRNet (sustained),196,Dangerous,CSRNET,sustained,False
+204,6.80,7,CSRNet (sustained),194,Dangerous,CSRNET,sustained,False
+207,6.90,8,CSRNet (sustained),195,Dangerous,CSRNET,sustained,False
+210,7.00,9,CSRNet (sustained),190,Dangerous,CSRNET,sustained,False
+213,7.10,8,CSRNet (sustained),189,Dangerous,CSRNET,sustained,False
+216,7.20,8,CSRNet (sustained),181,Dangerous,CSRNET,sustained,False
+219,7.30,6,CSRNet (sustained),188,Dangerous,CSRNET,sustained,False
+222,7.40,9,CSRNet (sustained),182,Dangerous,CSRNET,sustained,False
+225,7.50,8,CSRNet (sustained),184,Dangerous,CSRNET,sustained,False
+228,7.60,6,CSRNet (sustained),184,Dangerous,CSRNET,sustained,False
+231,7.70,5,CSRNet (sustained),181,Dangerous,CSRNET,sustained,False
+234,7.80,4,CSRNet (sustained),181,Dangerous,CSRNET,sustained,False
+237,7.90,5,CSRNet (sustained),176,Dangerous,CSRNET,sustained,False
+240,8.00,4,CSRNet (sustained),173,Dangerous,CSRNET,sustained,False
+243,8.10,4,CSRNet (sustained),177,Dangerous,CSRNET,sustained,False
+246,8.20,4,CSRNet (sustained),175,Dangerous,CSRNET,sustained,False
+249,8.30,5,CSRNet (sustained),177,Dangerous,CSRNET,sustained,False
+252,8.40,7,CSRNet (sustained),177,Dangerous,CSRNET,sustained,False
+255,8.50,6,CSRNet (sustained),174,Dangerous,CSRNET,sustained,False
+258,8.60,5,CSRNet (sustained),176,Dangerous,CSRNET,sustained,False
+261,8.70,5,CSRNet (sustained),176,Dangerous,CSRNET,sustained,False
+264,8.80,5,CSRNet (sustained),178,Dangerous,CSRNET,sustained,False
+267,8.90,5,CSRNet (sustained),179,Dangerous,CSRNET,sustained,False
+270,9.00,6,CSRNet (sustained),179,Dangerous,CSRNET,sustained,False
+273,9.10,5,CSRNet (sustained),179,Dangerous,CSRNET,sustained,False
+276,9.20,7,CSRNet (sustained),178,Dangerous,CSRNET,sustained,False
+279,9.30,7,CSRNet (sustained),179,Dangerous,CSRNET,sustained,False
+282,9.40,5,CSRNet (sustained),172,Dangerous,CSRNET,sustained,False
+285,9.50,5,CSRNet (sustained),169,Dangerous,CSRNET,sustained,False
+288,9.60,6,CSRNet (sustained),171,Dangerous,CSRNET,sustained,False
+291,9.70,5,CSRNet (sustained),178,Dangerous,CSRNET,sustained,False
+294,9.80,7,CSRNet (sustained),181,Dangerous,CSRNET,sustained,False
+297,9.90,6,CSRNet (sustained),179,Dangerous,CSRNET,sustained,False
+300,10.00,4,CSRNet (sustained),177,Dangerous,CSRNET,sustained,False
+303,10.10,3,CSRNet (sustained),176,Dangerous,CSRNET,sustained,False
+306,10.20,4,CSRNet (sustained),176,Dangerous,CSRNET,sustained,False
+309,10.30,6,CSRNet (sustained),171,Dangerous,CSRNET,sustained,False
+312,10.40,4,CSRNet (sustained),166,Dangerous,CSRNET,sustained,False
+315,10.50,5,CSRNet (sustained),169,Dangerous,CSRNET,sustained,False
+318,10.60,5,CSRNet (sustained),182,Dangerous,CSRNET,sustained,False
+321,10.70,5,CSRNet (sustained),177,Dangerous,CSRNET,sustained,False
+324,10.80,5,CSRNet (sustained),175,Dangerous,CSRNET,sustained,False
+327,10.90,4,CSRNet (sustained),179,Dangerous,CSRNET,sustained,False
+330,11.00,5,CSRNet (sustained),181,Dangerous,CSRNET,sustained,False
