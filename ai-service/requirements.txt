@@ -8,3 +8,5 @@ numpy
 scipy
 h5py
 opencv-python-headless
+ultralytics
+opencv-python
