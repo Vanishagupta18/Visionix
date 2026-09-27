@@ -2,6 +2,9 @@ from roboflow import Roboflow
 from ultralytics import YOLO
 import os
 import torch
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def main():
     # --- Step 0: Confirm GPU ---
@@ -9,7 +12,7 @@ def main():
     print("GPU name:", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "None")
 
     # --- Step 1: Download dataset ---
-    rf = Roboflow(api_key="7WvOwy0fkpWSnxPXrM9z")
+    rf = Roboflow(api_key=os.getenv("ROBOFLOW_API_KEY"))
     project = rf.workspace("sneha-shakya").project("live-weapon-detector-coisa")
     version = project.version(2)
     dataset = version.download("yolov8")
@@ -51,15 +54,15 @@ def main():
     model = YOLO('yolov8n.pt')
 
     results = model.train(
-    data=f"{dataset.location}/data.yaml",
-    epochs=20,
-    imgsz=320,
-    batch=8,
-    patience=6,
-    cache=False,
-    workers=0,
-    name='local_train_run3'
-)
+        data=f"{dataset.location}/data.yaml",
+        epochs=20,
+        imgsz=320,
+        batch=8,
+        patience=6,
+        cache=False,
+        workers=0,
+        name='local_train_run3'
+    )
 
     print("Training complete. Best model at:", results.save_dir)
 
