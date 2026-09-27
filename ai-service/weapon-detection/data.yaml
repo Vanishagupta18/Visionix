@@ -1,0 +1,14 @@
+names:
+- blunt
+- gun
+- knife
+nc: 3
+roboflow:
+  license: CC BY 4.0
+  project: live-weapon-detector-coisa
+  url: https://universe.roboflow.com/sneha-shakya/live-weapon-detector-coisa/dataset/2
+  version: 2
+  workspace: sneha-shakya
+test: ../test/images
+train: ../train/images
+val: ../valid/images

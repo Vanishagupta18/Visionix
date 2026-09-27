@@ -25,3 +25,4 @@ frontend/dist/
 *.log
 uploads/
 frames/
+*.pt
