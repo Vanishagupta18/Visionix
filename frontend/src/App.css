@@ -1,0 +1,7 @@
+/* App.css — Application-level styles only.
+   Login-specific styles are in auth.css.
+   Dashboard styles use Tailwind + inline styles. */
+
+* {
+  box-sizing: border-box;
+}
