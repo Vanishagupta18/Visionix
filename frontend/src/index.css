@@ -1,0 +1,40 @@
+/* Google Fonts MUST be first — before @import "tailwindcss" */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-serif: 'Newsreader', Georgia, serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+:root {
+  --vx-serif: 'Newsreader', Georgia, serif;
+  --vx-mono: 'JetBrains Mono', monospace;
+  --vx-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --vx-purple: #5644E4;
+  --vx-purple-dark: #4534D1;
+  --vx-amber: #F0A43B;
+  --vx-amber-hover: #E2972E;
+  --vx-cream-bg: #FAF4EA;
+  --vx-cream-panel: #FAF5EE;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: var(--vx-sans);
+  background-color: var(--vx-cream-bg);
+  color: #1e293b;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+}
