@@ -1,78 +1,153 @@
 import IncidentItem from "./IncidentItem";
 import { Bell } from "lucide-react";
 
-const incidents = [
-  {
-    id: 1, level: "CRITICAL", location: "Gate 3 Turnstiles", time: "2m ago",
-    title: "Abnormal Bottleneck & Rapid Surge",
-    description: "Density exceeded 1.35 pers/m². Inflow rate higher than gate throughput capacity. Risk of turnstile stampede.",
-    actions: ["Review Feed", "Deploy Patrol 2"],
-  },
-  {
-    id: 2, level: "HIGH", location: "West Corridor", time: "8m ago",
-    title: "Flow Rate Limit Approaching 92%",
-    description: "West Corridor Escalator upward passenger velocity slowing. CAM_11 indicates luggage obstruction.",
-    telemetry: "Escalator 4B Telemetry: 1.1m/s",
-    triageLink: "Triage",
-  },
-  {
-    id: 3, level: "MEDIUM", location: "North Concourse", time: "14m ago",
-    title: "Stationary Group / Obstruction",
-    description: "Cluster of 14 people stationary around Info Kiosk > 9 minutes. Minor lateral pedestrian deviation.",
-    telemetry: "CAM_02 Detection confidence: 95%",
-    triageLink: "Dismiss",
-  },
-  {
-    id: 4, level: "LOW", location: "Perimeter Gate 2", time: "22m ago",
-    title: "Perimeter Motion Drift",
-    description: "Low-density movement near egress gate. Normal pedestrian flow pattern confirmed.",
-  },
-];
+const SEVERITY_MAP = {
+  Critical: "CRITICAL",
+  "High Risk": "HIGH",
+  Dangerous: "CRITICAL",
+  Warning: "MEDIUM",
+  Crowded: "MEDIUM",
+  Safe: "LOW",
+};
 
-export default function IncidentFeed() {
+function normalizeAlerts(value) {
+  if (Array.isArray(value)) return value;
+  if (Array.isArray(value?.alerts)) return value.alerts;
+  if (Array.isArray(value?.data)) return value.data;
+  if (Array.isArray(value?.results)) return value.results;
+
+  return [];
+}
+
+function timeAgo(iso) {
+  if (!iso) return "";
+
+  const timestamp = new Date(iso).getTime();
+
+  if (!Number.isFinite(timestamp)) return "";
+
+  const diffMs = Math.max(0, Date.now() - timestamp);
+  const mins = Math.floor(diffMs / 60000);
+
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+
+  const hrs = Math.floor(mins / 60);
+
+  if (hrs < 24) return `${hrs}h ago`;
+
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
+export default function IncidentFeed({ alerts: rawAlerts = [] }) {
+  const alerts = normalizeAlerts(rawAlerts);
+
+  const activeCount = alerts.filter(
+    (alert) => alert?.status === "active"
+  ).length;
+
   return (
-    <div style={{
-      backgroundColor: "#fff",
-      borderRadius: 16,
-      border: "1px solid rgba(226,220,212,0.9)",
-      boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-      display: "flex",
-      flexDirection: "column",
-      minHeight: 480,
-    }}>
-      {/* Header */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "14px 18px",
-        borderBottom: "1px solid #f1f5f9",
-        flexShrink: 0,
-      }}>
+    <div
+      style={{
+        backgroundColor: "#fff",
+        borderRadius: 16,
+        border: "1px solid rgba(226,220,212,0.9)",
+        boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+        display: "flex",
+        flexDirection: "column",
+        minHeight: 480,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "14px 18px",
+          borderBottom: "1px solid #f1f5f9",
+          flexShrink: 0,
+        }}
+      >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{
-            padding: 6, borderRadius: 8,
-            backgroundColor: "#fffbeb", border: "1px solid #fde68a",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
+          <div
+            style={{
+              padding: 6,
+              borderRadius: 8,
+              backgroundColor: "#fffbeb",
+              border: "1px solid #fde68a",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
             <Bell size={14} color="#d97706" />
           </div>
-          <span style={{
-            fontFamily: "var(--vx-serif)", fontSize: 17, fontWeight: 400,
-            color: "#0f172a",
-          }}>Active Incident Stream</span>
+
+          <span
+            style={{
+              fontFamily: "var(--vx-serif)",
+              fontSize: 17,
+              fontWeight: 400,
+              color: "#0f172a",
+            }}
+          >
+            Active Incident Stream
+          </span>
         </div>
 
-        <span style={{
-          fontFamily: "var(--vx-mono)", fontSize: 9, fontWeight: 700,
-          padding: "3px 9px", borderRadius: 999,
-          backgroundColor: "#fffbeb", color: "#92400e",
-          border: "1px solid #fcd34d",
-        }}>4 Pending</span>
+        <span
+          style={{
+            fontFamily: "var(--vx-mono)",
+            fontSize: 9,
+            fontWeight: 700,
+            padding: "3px 9px",
+            borderRadius: 999,
+            backgroundColor: "#fffbeb",
+            color: "#92400e",
+            border: "1px solid #fcd34d",
+          }}
+        >
+          {activeCount} Active
+        </span>
       </div>
 
-      {/* Incident list */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
-        {incidents.map(incident => (
-          <IncidentItem key={incident.id} {...incident} />
+      <div
+        style={{
+          flex: 1,
+          overflowY: "auto",
+          padding: "12px 14px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 10,
+        }}
+      >
+        {alerts.length === 0 && (
+          <p
+            style={{
+              fontFamily: "var(--vx-mono)",
+              fontSize: 11,
+              color: "#94a3b8",
+              textAlign: "center",
+              padding: "24px 0",
+            }}
+          >
+            No incidents recorded yet.
+          </p>
+        )}
+
+        {alerts.map((alert, index) => (
+          <IncidentItem
+            key={alert?._id ?? `alert-${index}`}
+            level={SEVERITY_MAP[alert?.severity] || "MEDIUM"}
+            location={alert?.zone?.name || "Unknown zone"}
+            time={timeAgo(alert?.createdAt)}
+            title={
+              alert?.severity
+                ? `${alert.severity} crowd level`
+                : "Alert"
+            }
+            description={alert?.message || "No additional details."}
+          />
         ))}
       </div>
     </div>
