@@ -1,28 +1,50 @@
-# ===== Python (ai-service) =====
+
+# ===== Environment variables and secrets =====
+.env
+.env.*
+!.env.example
+!.env.sample
+
+backend/.env
+frontend/.env
+ai-service/.env
+
+# ===== Python (AI service) =====
 __pycache__/
-*.pyc
+*.py[cod]
 .venv/
 venv/
 env/
+
+# Model weights and checkpoints
 *.pth
 *.pth.tar
+*.pt
 ai-service/weights/*
 !ai-service/weights/.gitkeep
 
-# ===== Node (backend) =====
+# ===== Node.js (backend and frontend) =====
+node_modules/
 backend/node_modules/
-backend/.env
-backend/npm-debug.log
-
-# ===== React (frontend) =====
 frontend/node_modules/
-frontend/.env
+
+backend/npm-debug.log
+frontend/npm-debug.log
+
+# Build output
 frontend/build/
 frontend/dist/
 
-# ===== General =====
-.DS_Store
-*.log
+# ===== Local data and generated files =====
 uploads/
 frames/
-*.pt
+ai-service/risk/test_videos/
+ai-service/risk/log_*.csv
+
+# ===== Logs =====
+*.log
+
+# ===== OS and editor files =====
+.DS_Store
+Thumbs.db
+.vscode/
