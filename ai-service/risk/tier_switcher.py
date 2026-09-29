@@ -59,11 +59,17 @@ class TierSwitcher:
         """
         now = current_time if current_time is not None else time.time()
         if self._last_periodic_check is None:
+            # First frame ever seen: check immediately rather than waiting a
+            # full PERIODIC_CHECK_INTERVAL_SEC. Otherwise a feed or video that
+            # starts already-dense would run on YOLO's raw count alone,
+            # possibly badly wrong, for the first several seconds with no
+            # CSRNet cross-check at all.
+            periodic_due = True
             self._last_periodic_check = now
-
-        periodic_due = (now - self._last_periodic_check) >= PERIODIC_CHECK_INTERVAL_SEC
-        if periodic_due:
-            self._last_periodic_check = now
+        else:
+            periodic_due = (now - self._last_periodic_check) >= PERIODIC_CHECK_INTERVAL_SEC
+            if periodic_due:
+                self._last_periodic_check = now
 
         was_yolo_mode = (self.mode == "YOLO")
 
