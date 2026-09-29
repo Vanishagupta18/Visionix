@@ -7,6 +7,8 @@ const { Server } = require('socket.io');
 
 const connectDB = require('./config/db');
 const zoneRoutes = require('./routes/zoneRoutes');
+const ingestRoutes = require('./routes/ingestRoutes');
+const monitoringRoutes = require('./routes/monitoringRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -29,6 +31,8 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api', zoneRoutes);
+app.use('/api', ingestRoutes);     // POST /api/ingest/reading - pushed by ai-service/live_service.py
+app.use('/api', monitoringRoutes); // POST/GET /api/monitoring/* - proxied to the AI service
 
 io.on('connection', (socket) => {
   console.log('[Visonix] Dashboard connected:', socket.id);
