@@ -1,27 +1,19 @@
 const express = require('express');
-const multer = require('multer');
 const router = express.Router();
-
 const {
-  createZone,
   getZones,
+  createZone,
   getZoneById,
-  processFrame,
-  getZoneHistory,
+  getZoneReadings,
   getAlerts,
+  resolveAlert,
 } = require('../controllers/zoneController');
 
-// Store uploaded frames in memory, then forward to the AI service
-// (no need to persist raw frames to disk for the core flow)
-const upload = multer({ storage: multer.memoryStorage() });
-
-router.post('/zones', createZone);
 router.get('/zones', getZones);
+router.post('/zones', createZone);
 router.get('/zones/:id', getZoneById);
-
-router.post('/zones/:zoneId/process-frame', upload.single('file'), processFrame);
-router.get('/zones/:zoneId/history', getZoneHistory);
-
+router.get('/zones/:id/readings', getZoneReadings);
 router.get('/alerts', getAlerts);
+router.patch('/alerts/:id/resolve', resolveAlert);
 
 module.exports = router;
