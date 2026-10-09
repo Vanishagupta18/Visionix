@@ -1,0 +1,12 @@
+﻿.env
+runs/
+*.pt
+!models/best.pt
+__pycache__/
+*.pyc
+*.bak
+venv/
+live-weapon-detector-*/
+*.mp4
+downloaded_screenshots/
+new_images/
