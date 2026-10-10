@@ -15,9 +15,10 @@ client = MongoClient(mongo_uri)
 db = client["weapon_detection"]
 collection = db["detections"]
 
-model = YOLO(r'E:\SNEHA\runs\detect\runs\detect\local_train_run4-7\weights\best.pt')
+model = YOLO(r'weights\yolov8n.pt')
 
-cap = cv2.VideoCapture(0)
+CAMERA_URL = "http://172.27.22.217:8080/video" #camera path yaha dena h 
+cap = cv2.VideoCapture(CAMERA_URL)
 
 if not cap.isOpened():
     raise RuntimeError("Webcam nahi khul payi")

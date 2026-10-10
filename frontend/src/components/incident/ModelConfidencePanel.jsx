@@ -1,1 +1,2 @@
-export default function ModelConfidencePanel() { return <div>Model Confidence</div>; }
+import ModelConfidencePanel from "../alerts/ModelConfidencePanel";
+export default ModelConfidencePanel;

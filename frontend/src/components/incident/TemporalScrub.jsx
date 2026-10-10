@@ -1,1 +1,2 @@
-export default function TemporalScrub() { return <input type="range" />; }
+import TemporalForensicScrub from "../alerts/TemporalForensicScrub";
+export default TemporalForensicScrub;

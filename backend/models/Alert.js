@@ -10,9 +10,20 @@ const alertSchema = new mongoose.Schema(
     message: { type: String },
     reading: { type: mongoose.Schema.Types.ObjectId, ref: 'Reading' },
 
-    status: { type: String, enum: ['active', 'resolved'], default: 'active', index: true },
+    // lifecycle: active -> resolved (auto, back to Safe) or dismissed (operator, false positive)
+    status: { type: String, enum: ['active', 'resolved', 'dismissed'], default: 'active', index: true },
     resolvedAt: { type: Date },
     acknowledged: { type: Boolean, default: false },
+    acknowledgedAt: { type: Date },
+    dismissedAt: { type: Date },
+
+    // live AI data shown on the Alerts page
+    riskScore: { type: Number },
+    density: { type: Number },            // people per m^2
+    countSource: { type: String },        // 'YOLO' or 'CSRNet'
+    crowdMode: { type: String },          // 'YOLO' or 'CSRNET'
+    weaponDetected: { type: Boolean, default: false },
+    signals: { type: mongoose.Schema.Types.Mixed, default: {} }, // weapon, fight, ... (future models)
   },
   { timestamps: true }
 );

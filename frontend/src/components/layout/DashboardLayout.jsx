@@ -21,15 +21,15 @@ export default function DashboardLayout({ children, activeNav = "Cameras", onNav
         display: "flex",
         flexDirection: "column",
         minWidth: 0,
-        overflow: "hidden",
+        overflowY: "auto",
+        overflowX: "hidden",
+        backgroundColor: "#f4f3ee",
       }}>
         <Topbar />
 
-        {/* Scrollable page area */}
+        {/* Page area */}
         <main style={{
           flex: 1,
-          overflowY: "auto",
-          overflowX: "hidden",
           padding: "16px 20px",
           backgroundColor: "#f4f3ee",
         }}>

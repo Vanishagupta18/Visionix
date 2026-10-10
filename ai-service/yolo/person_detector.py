@@ -8,7 +8,7 @@ import time
 from ultralytics import YOLO
 
 # ---- CONFIG - edit these two lines for your setup ----
-CAMERA_URL = "http://192.168.29.128:8080/video"   # replace with YOUR phone's IP Webcam URL
+CAMERA_URL = "http://172.27.22.217:8080/video"   # replace with YOUR phone's IP Webcam URL
 CONF_THRESHOLD = 0.4                              # same threshold you tuned in Colab
 
 # Simple placeholder status thresholds - TUNE these using your own test footage,

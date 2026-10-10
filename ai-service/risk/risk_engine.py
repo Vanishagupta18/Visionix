@@ -34,10 +34,17 @@ values once the weapon detector and motion-spike module exist.
 # CURRENT PHASE: only density (crowd count) is a real, built signal - weapon
 # and motion detectors don't exist yet. So their weight is 0 for now.
 # ONCE the weapon detector and motion module are built, switch to:
+
+# YOLO -> CSRNet model switch point (people seen by YOLO)
+
+CSRNET_SWITCH_COUNT = 40
+
 #   WEIGHT_DENSITY = 0.4 ; WEIGHT_MOTION = 0.3 ; WEIGHT_WEAPON = 0.3
 WEIGHT_DENSITY = 1.0
 WEIGHT_MOTION = 0.0
 WEIGHT_WEAPON = 0.0
+
+
 
 # --- Measure this for your actual demo room/zone before presenting ---
 # Pace it out (~0.75m per adult step) or tape-measure length x width.

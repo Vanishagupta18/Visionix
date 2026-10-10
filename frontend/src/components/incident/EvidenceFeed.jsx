@@ -1,1 +1,2 @@
-export default function EvidenceFeed() { return <div>Evidence</div>; }
+import EvidenceFeed from "../alerts/EvidenceFeed";
+export default EvidenceFeed;

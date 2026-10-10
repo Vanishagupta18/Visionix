@@ -4,15 +4,16 @@ Visonix - Tier 1 / Tier 2 crowd monitor with hysteresis switching.
 Tier 1 (always on):  YOLO person counting - cheap, runs every processed frame.
 Tier 2 (gated):       CSRNet density estimation - only runs when triggered.
 
-Switching logic (see architecture doc, Sections 9-10):
-  - Two thresholds, not one (hysteresis) -> prevents flicker right at the boundary.
-  - Requires N consecutive frames before switching either direction (debounce)
-    -> a single noisy frame can't flip the mode.
-  - A periodic mandatory CSRNet check runs regardless of YOLO's count
-    -> safety net for YOLO undercounting in very dense crowds.
+Switching logic (see tier_switcher.py). The YOLO -> CSRNet switch point
+(CSRNET_SWITCH_COUNT = 40) is defined in risk_engine.py.
 
-Run from the ai-service folder so yolov8n.pt caches in one place and the
-weights/ path in main.py resolves correctly:
+v3 display fix: CSRNet's count is only SHOWN when the switcher is actually in
+CSRNET mode. A periodic safety check in YOLO mode still runs CSRNet, but its
+number is only used as a signal for the switcher - it is not displayed. That
+was why an empty scene flashed ~7 people every few seconds (CSRNet's
+background noise on a sparse scene).
+
+Run from the ai-service folder:
 
     (venv) PS D:\\visonix\\ai-service> python risk\\crowd_monitor.py
 """
@@ -24,20 +25,12 @@ import cv2
 from PIL import Image
 from ultralytics import YOLO
 
-# Make ai-service/ (the parent of this risk/ folder) importable, so we can
-# reuse your existing, already-tested CSRNet pipeline instead of duplicating it.
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-from main import predict_from_pil, classify  # noqa: E402  (import after sys.path fix, intentional)
+from main import predict_from_pil, classify  # noqa: E402
 
-from tier_switcher import TierSwitcher  # noqa: E402  (same folder, shared with crowd_monitor_video.py)
+from tier_switcher import TierSwitcher  # noqa: E402
 
-# ---------------------------------------------------------------------------
-# CONFIG specific to the live-camera entry point.
-# The switching thresholds (ENTER/EXIT/PERIODIC_CHECK) now live in
-# tier_switcher.py, shared with crowd_monitor_video.py - edit them there.
-# ---------------------------------------------------------------------------
-
-CAMERA_URL = "http://192.168.1.105:8080/video"   # or 0 for laptop webcam
+CAMERA_URL = "http://172.27.22.217:8080/video"   # or 0 for laptop webcam
 YOLO_CONF = 0.4
 PROCESS_EVERY_N_FRAMES = 3
 
@@ -73,23 +66,30 @@ def main():
 
             run_csrnet, reason = switcher.decide(yolo_count)
 
+            csrnet_count = None
             if run_csrnet:
                 frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 pil_img = Image.fromarray(frame_rgb)
-                csrnet_result = predict_from_pil(pil_img)
-                final_count = csrnet_result["count"]
-                final_status = csrnet_result["status"]
+                csrnet_count = predict_from_pil(pil_img)["count"]
+                # Close the loop - lets the switcher confirm/exit CSRNET mode
+                switcher.report_csrnet_result(csrnet_count)
+
+            # Decide what to DISPLAY, after the switcher has updated its mode.
+            if switcher.mode == "CSRNET" and csrnet_count is not None:
+                # YOLO's count is a hard lower bound (each box is a real person),
+                # so never show fewer than YOLO actually detected.
+                final_count = max(csrnet_count, yolo_count)
                 source = f"CSRNet ({reason})"
-                # Close the loop - lets a periodic check latch the mode (see tier_switcher.py)
-                switcher.report_csrnet_result(final_count)
             else:
                 final_count = yolo_count
-                final_status = classify(yolo_count)  # reuses your exact Safe/Crowded/Dangerous bands
                 source = "YOLO"
+            final_status = classify(final_count)
 
             annotated = results[0].plot()
             label1 = f"Source: {source}  |  Count: {final_count}  |  {final_status}"
-            label2 = f"Mode: {switcher.mode}  |  YOLO raw count: {yolo_count}"
+            label2 = f"Mode: {switcher.mode}  |  YOLO raw: {yolo_count}"
+            if csrnet_count is not None and source == "YOLO":
+                label2 += f"  |  CSRNet check: {csrnet_count} (not used)"
             cv2.putText(annotated, label1, (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.85, (255, 255, 255), 2)
             cv2.putText(annotated, label2, (20, 75), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (200, 200, 0), 2)
 

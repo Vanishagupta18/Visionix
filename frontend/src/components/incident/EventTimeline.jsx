@@ -1,1 +1,2 @@
-export default function EventTimeline() { return <div>Timeline</div>; }
+import EventTimeline from "../alerts/EventTimeline";
+export default EventTimeline;

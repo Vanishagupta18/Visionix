@@ -23,9 +23,9 @@ const navItems = [
     icon: Bell,
     badge: "2",
     badgeRed: true,
-    path: "/dashboard",
+    path: "/alerts",
   },
-  { name: "Analytics", icon: BarChart2, path: "/dashboard" },
+  { name: "Analytics", icon: BarChart2, path: "/analytics" },
   { name: "System Settings", icon: Settings, path: "/dashboard" },
 ];
 

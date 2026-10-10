@@ -1,1 +1,2 @@
-export default function IncidentHeader() { return <header>Incident</header>; }
+import AlertHeader from "../alerts/AlertHeader";
+export default AlertHeader;

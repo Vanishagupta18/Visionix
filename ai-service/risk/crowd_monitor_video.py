@@ -15,6 +15,10 @@ Produces three things so you can properly verify the switching behaviour:
      graph count-over-time, and see the exact timestamp of every switch -
      good evidence to include in your report.
 
+v3 display fix: CSRNet's count is only SHOWN when the switcher is actually in
+CSRNET mode. Periodic checks in YOLO mode still run CSRNet, but that number is
+only a signal for the switcher (logged as csrnet_check), not the displayed count.
+
 Run from the ai-service folder:
     (venv) PS D:\\visonix\\ai-service> python risk\\crowd_monitor_video.py
 """
@@ -34,14 +38,6 @@ from main import predict_from_pil, classify  # noqa: E402
 
 from tier_switcher import TierSwitcher  # noqa: E402  (same folder, no path fix needed)
 
-# ---------------------------------------------------------------------------
-# CONFIG - point this at your own test video(s)
-#
-# These paths are anchored to THIS SCRIPT'S folder (ai-service/risk/), not to
-# wherever your terminal's current directory happens to be - so it works
-# whether you run it as `python risk\crowd_monitor_video.py` from ai-service,
-# or `python crowd_monitor_video.py` from inside risk itself.
-# ---------------------------------------------------------------------------
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 INPUT_VIDEO = os.path.join(SCRIPT_DIR, "test_videos", "video2.mp4")
@@ -82,7 +78,7 @@ def main():
     switcher = TierSwitcher()
     csv_file = open(LOG_CSV, "w", newline="")
     csv_writer = csv.writer(csv_file)
-    csv_writer.writerow(["frame", "video_time_sec", "yolo_raw_count", "source",
+    csv_writer.writerow(["frame", "video_time_sec", "yolo_raw_count", "csrnet_check", "source",
                           "final_count", "status", "mode", "reason", "mode_changed"])
 
     print(f"Processing ~{total_frames} frames at {fps:.1f} fps ...\n")
@@ -101,25 +97,26 @@ def main():
             yolo_count = sum(1 for c in results[0].boxes.cls if int(c) == person_id)
 
             # Pass VIDEO time (not wall-clock), so "every N seconds" means N
-            # seconds of video content - correct regardless of how fast your
-            # machine actually processes frames.
+            # seconds of video content - correct regardless of processing speed.
             run_csrnet, reason = switcher.decide(yolo_count, current_time=video_time_sec)
 
+            csrnet_count = None
             if run_csrnet:
                 frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 pil_img = Image.fromarray(frame_rgb)
-                csrnet_result = predict_from_pil(pil_img)
-                final_count = csrnet_result["count"]
-                final_status = csrnet_result["status"]
+                csrnet_count = predict_from_pil(pil_img)["count"]
+                # Feed the real measured count back into the state machine.
+                switcher.report_csrnet_result(csrnet_count)
+
+            # Decide what to DISPLAY, after the switcher has updated its mode.
+            if switcher.mode == "CSRNET" and csrnet_count is not None:
+                # YOLO's count is a hard lower bound - never show fewer than it detected.
+                final_count = max(csrnet_count, yolo_count)
                 source = f"CSRNet ({reason})"
-                # Feed the real measured count back into the state machine - this is
-                # what lets a 'periodic' check that discovers a dense scene actually
-                # latch the mode, instead of being forgotten after one frame.
-                switcher.report_csrnet_result(final_count)
             else:
                 final_count = yolo_count
-                final_status = classify(yolo_count)
                 source = "YOLO"
+            final_status = classify(final_count)
 
             mode_changed = switcher.mode != prev_mode
             prev_mode = switcher.mode
@@ -127,6 +124,8 @@ def main():
             annotated = results[0].plot()
             label1 = f"Source: {source}  |  Count: {final_count}  |  {final_status}"
             label2 = f"Mode: {switcher.mode}  |  YOLO raw: {yolo_count}  |  t={video_time_sec:.1f}s"
+            if csrnet_count is not None and source == "YOLO":
+                label2 += f"  |  CSRNet check: {csrnet_count} (not used)"
             cv2.putText(annotated, label1, (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.85, (255, 255, 255), 2)
             cv2.putText(annotated, label2, (20, 75), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (200, 200, 0), 2)
             if mode_changed:
@@ -136,11 +135,13 @@ def main():
             out.write(annotated)
 
             marker = "  <<< SWITCH" if mode_changed else ""
+            check_txt = f"  csrnet_check={csrnet_count}" if csrnet_count is not None else ""
             print(f"t={video_time_sec:6.1f}s  frame={frame_num:5d}  "
                   f"YOLO={yolo_count:3d}  ->  {source:22s}  count={final_count:3d}  "
-                  f"{final_status:10s}  mode={switcher.mode}{marker}")
+                  f"{final_status:10s}  mode={switcher.mode}{check_txt}{marker}")
 
-            csv_writer.writerow([frame_num, f"{video_time_sec:.2f}", yolo_count, source,
+            csv_writer.writerow([frame_num, f"{video_time_sec:.2f}", yolo_count,
+                                  "" if csrnet_count is None else csrnet_count, source,
                                   final_count, final_status, switcher.mode, reason, mode_changed])
         else:
             out.write(frame)  # skipped frames written as-is, no re-detection

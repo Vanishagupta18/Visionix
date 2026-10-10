@@ -1,1 +1,2 @@
-export default function IncidentDetail() { return <h1>Incident Detail</h1>; }
+import Alerts from "./Alerts";
+export default Alerts;

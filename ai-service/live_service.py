@@ -122,6 +122,7 @@ app.add_middleware(
 state_lock = threading.Lock()
 _latest_frame = None
 _latest_annotated_jpeg = None
+_latest_raw_jpeg = None
 _camera_connected = False
 _monitoring_active = False
 _main_loop = None  # the server's asyncio loop, set on startup (used to broadcast from threads)
@@ -205,7 +206,7 @@ def _run_csrnet(frame_bgr):
 
 
 def _inference_loop():
-    global _latest_annotated_jpeg, _latest_result
+    global _latest_annotated_jpeg, _latest_raw_jpeg, _latest_result
 
     while not _stop_event.is_set():
         loop_start = time.time()
@@ -215,14 +216,26 @@ def _inference_loop():
             connected = _camera_connected
 
         if frame is None or not connected:
+            _switcher.__init__()   # mode wapas YOLO, counters zero
             with state_lock:
-                _latest_result = {**_latest_result, "cameraStatus": "disconnected",
-                                  "timestamp": datetime.now(timezone.utc).isoformat()}
+                _latest_annotated_jpeg = None   # purana frame hatao
+                _latest_result = {
+                    **_latest_result,
+                    "cameraStatus": "disconnected",
+                    "personCount": 0,
+                    "countSource": "-",
+                    "crowdMode": "YOLO",
+                    "detections": [],
+                    "objectDetections": [],
+                    "density": {"peoplePerSquareMeter": 0.0, "zoneAreaSqm": ZONE_AREA_SQM},
+                    "risk": {"score": 0.0, "label": "Safe", "breakdown": {}},
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
             time.sleep(PROCESS_EVERY_N_SEC)
             continue
 
         t0 = time.time()
-        results = yolo_model(frame, conf=YOLO_CONF, verbose=False)
+        results = yolo_model(frame, conf=YOLO_CONF, classes=[0], verbose=False)
         yolo_ms = (time.time() - t0) * 1000
         r = results[0]
 
@@ -242,15 +255,15 @@ def _inference_loop():
         run_csrnet = run_csrnet and CSRNET_AVAILABLE
 
         csrnet_ms = None
+        final_count, count_source = yolo_count, "YOLO"
         if run_csrnet:
             t1 = time.time()
             with csrnet_lock:
                 csrnet_count = _run_csrnet(frame)
             csrnet_ms = (time.time() - t1) * 1000
             _switcher.report_csrnet_result(csrnet_count)
-            final_count, count_source = csrnet_count, "CSRNet"
-        else:
-            final_count, count_source = yolo_count, "YOLO"
+            if _switcher.mode == "CSRNET":
+                final_count, count_source = max(csrnet_count, yolo_count), "CSRNet"
 
         crowd_mode = _switcher.mode if CSRNET_AVAILABLE else "YOLO"
 
@@ -271,6 +284,7 @@ def _inference_loop():
             cv2.putText(annotated, "CSRNet: unavailable", (16, 98),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 165, 255), 1)
         ok, jpeg = cv2.imencode(".jpg", annotated, [cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY])
+        ok_raw, raw_jpeg = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY])
 
         result = {
             "cameraId": ZONE_NAME,
@@ -298,6 +312,8 @@ def _inference_loop():
             _latest_result = result
             if ok:
                 _latest_annotated_jpeg = jpeg.tobytes()
+            if ok_raw:
+                _latest_raw_jpeg = raw_jpeg.tobytes()
 
         if _main_loop is not None and _ws_clients:
             asyncio.run_coroutine_threadsafe(_broadcast_ws(result), _main_loop)
@@ -417,6 +433,20 @@ def stream_live():
             time.sleep(PROCESS_EVERY_N_SEC)
 
     return StreamingResponse(gen(), media_type="multipart/x-mixed-replace; boundary=frame")
+
+@app.get("/stream/raw")
+def stream_raw():
+    """Saaf camera feed: koi box, count ya risk text nahi (Alerts page ke liye)."""
+    def gen():
+        while True:
+            with state_lock:
+                frame = _latest_raw_jpeg
+            if frame is not None:
+                yield b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + frame + b"\r\n"
+            time.sleep(PROCESS_EVERY_N_SEC)
+
+    return StreamingResponse(gen(), media_type="multipart/x-mixed-replace; boundary=frame")
+
 
 
 @app.websocket("/ws/live")
