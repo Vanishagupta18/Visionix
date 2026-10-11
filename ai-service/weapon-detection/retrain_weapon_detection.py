@@ -1,4 +1,4 @@
-from roboflow import Roboflow
+﻿from roboflow import Roboflow
 from ultralytics import YOLO
 from dotenv import load_dotenv
 import os
@@ -20,7 +20,7 @@ PATIENCE = 10
 
 def main():
     load_dotenv()
-    api_key = os.getenv("mLFKdvxIdsbPQ9EstJ4d")
+    api_key = os.getenv("ROBOFLOW_API_KEY")
     if not api_key:
         raise RuntimeError("Put ROBOFLOW_API_KEY=... in your .env file")
 
