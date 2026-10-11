@@ -1,5 +1,10 @@
-﻿import cv2
-import os
+﻿import os
+os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "timeout;5000000"
+os.environ["OPENCV_LOG_LEVEL"] = "ERROR"
+os.environ["OPENCV_FFMPEG_LOGLEVEL"] = "-8"
+
+import cv2
+import time
 import base64
 import winsound
 from datetime import datetime
@@ -11,35 +16,58 @@ from dotenv import load_dotenv
 load_dotenv()
 mongo_uri = os.getenv("MONGO_URI")
 
-client = MongoClient(mongo_uri)
+client = MongoClient(mongo_uri, serverSelectionTimeoutMS=30000)
 db = client["weapon_detection"]
 collection = db["detections"]
+from pathlib import Path
 
-model = YOLO(r'weights\yolov8n.pt')
+BASE_DIR = Path(__file__).resolve().parent
+model = YOLO(str(BASE_DIR / "models" / "best.pt"))
+print("Classes:", model.names)
 
-CAMERA_URL = "http://172.27.22.217:8080/video" #camera path yaha dena h 
-cap = cv2.VideoCapture(CAMERA_URL)
+URL = "http://172.27.22.217:8080/video"
+
+def open_cam():
+    c = cv2.VideoCapture(URL)
+    c.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+    return c
+
+cap = open_cam()
 
 if not cap.isOpened():
     raise RuntimeError("Webcam nahi khul payi")
+
+time.sleep(2)
+for _ in range(30):
+    cap.read()
+fail_count = 0
 
 cv2.namedWindow('Live Weapon Detection', cv2.WINDOW_NORMAL)
 cv2.resizeWindow('Live Weapon Detection', 960, 540)
 
 CONSECUTIVE_FRAMES_REQUIRED = 5
+ALERT_GAP_SECONDS = 10
 detection_counter = 0
 alert_triggered = False
 detection_number = 0
+last_alert_time = 0
 
 months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
 while True:
     ret, frame = cap.read()
     if not ret:
-        print("Webcam se frame nahi mil raha")
-        break
+        fail_count += 1
+        if fail_count > 10:
+            print("Stream atak gayi, reconnect kar raha hoon...")
+            cap.release()
+            time.sleep(2)
+            cap = open_cam()
+            fail_count = 0
+        continue
+    fail_count = 0
 
-    results = model.predict(frame, conf=0.5, iou=0.3, verbose=False)
+    results = model.predict(frame, conf=0.3, iou=0.3, verbose=False)
     boxes = results[0].boxes
 
     keep_indices = []
@@ -47,7 +75,7 @@ while True:
         cls_id = int(box.cls[0])
         conf = float(box.conf[0])
 
-        if cls_id == 0 and conf < 0.8:
+        if cls_id == 0 and conf < 0.5:
             continue
         elif cls_id == 1 and conf < 0.8:
             continue
@@ -66,8 +94,11 @@ while True:
         detection_counter = 0
         alert_triggered = False
 
-    if detection_counter >= CONSECUTIVE_FRAMES_REQUIRED and not alert_triggered:
+    if (detection_counter >= CONSECUTIVE_FRAMES_REQUIRED
+            and not alert_triggered
+            and time.time() - last_alert_time > ALERT_GAP_SECONDS):
         alert_triggered = True
+        last_alert_time = time.time()
         winsound.Beep(1000, 500)
 
         now = datetime.now()
@@ -77,29 +108,34 @@ while True:
         time_str = now.strftime("%I:%M:%S %p")
         day_str = now.strftime("%A")
 
-        # Image ko memory mein encode karo (JPEG bytes), phir base64 string banao
         success, buffer = cv2.imencode('.jpg', annotated)
         image_base64 = base64.b64encode(buffer).decode('utf-8')
 
+        detections_list = []
         for box in filtered_boxes:
-            conf = float(box.conf[0])
-            cls_id = int(box.cls[0])
-            cls_name = model.names[cls_id]
+            detections_list.append({
+                "class_name": model.names[int(box.cls[0])],
+                "confidence": round(float(box.conf[0]), 2),
+                "bbox": [round(v, 1) for v in box.xyxy[0].tolist()]
+            })
 
-            document = {
-                "detection_number": detection_number,
-                "date": date_str,
-                "time": time_str,
-                "day": day_str,
-                "class_name": cls_name,
-                "confidence": round(conf, 2),
-                "screenshot_base64": image_base64,
-                "created_at": now
-            }
+        document = {
+            "detection_number": detection_number,
+            "date": date_str,
+            "time": time_str,
+            "day": day_str,
+            "total_objects": len(detections_list),
+            "detections": detections_list,
+            "max_confidence": max(d["confidence"] for d in detections_list),
+            "screenshot_base64": image_base64,
+            "created_at": now
+        }
 
+        try:
             collection.insert_one(document)
-
-        print(f"[ALERT #{detection_number}] Detected and saved to MongoDB -> {date_str} {time_str}")
+            print(f"[ALERT #{detection_number}] {len(detections_list)} object(s) saved to MongoDB -> {date_str} {time_str}")
+        except Exception as e:
+            print("MongoDB save failed:", e)
 
     cv2.imshow('Live Weapon Detection', annotated)
 
@@ -111,3 +147,4 @@ while True:
 cap.release()
 cv2.destroyAllWindows()
 client.close()
+

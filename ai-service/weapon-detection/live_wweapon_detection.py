@@ -1,20 +1,20 @@
+import os
+from dotenv import load_dotenv
+load_dotenv()
 from roboflow import Roboflow
 from ultralytics import YOLO
 import os
 import torch
-from dotenv import load_dotenv
-
-load_dotenv()
 
 def main():
     # --- Step 0: Confirm GPU ---
     print("GPU available:", torch.cuda.is_available())
     print("GPU name:", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "None")
 
-    # --- Step 1: Download dataset ---
+    # --- Step 1: Download dataset (v5 - with real clicked images) ---
     rf = Roboflow(api_key=os.getenv("ROBOFLOW_API_KEY"))
     project = rf.workspace("sneha-shakya").project("live-weapon-detector-coisa")
-    version = project.version(2)
+    version = project.version(5)
     dataset = version.download("yolov8")
     print("Downloaded to:", dataset.location)
 
@@ -50,18 +50,18 @@ def main():
 
     print(f"Fixed {fixed} polygon labels")
 
-    # --- Step 3: Train ---
+    # --- Step 3: Train (improved settings) ---
     model = YOLO('yolov8n.pt')
 
     results = model.train(
         data=f"{dataset.location}/data.yaml",
-        epochs=20,
-        imgsz=320,
+        epochs=25,
+        imgsz=416,
         batch=8,
-        patience=6,
+        patience=8,
         cache=False,
         workers=0,
-        name='local_train_run3'
+        name='local_train_run4'
     )
 
     print("Training complete. Best model at:", results.save_dir)

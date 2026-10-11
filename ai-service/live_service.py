@@ -69,7 +69,7 @@ CSRNET_WEIGHTS = os.environ.get(
     "CSRNET_WEIGHTS", os.path.join(SCRIPT_DIR, "weights", "PartAmodel_best.pth.tar")
 )
 WEAPON_WEIGHTS = os.environ.get(
-    "WEAPON_WEIGHTS", os.path.join(SCRIPT_DIR, "weapon-detection", "weights", "best.pt")
+    "WEAPON_WEIGHTS", os.path.join(SCRIPT_DIR, "weapon-detection", "models", "best.pt")
 )
 
 PROCESS_EVERY_N_SEC = float(os.environ.get("PROCESS_EVERY_N_SEC", "0.3"))
@@ -269,22 +269,68 @@ def _inference_loop():
 
         t2 = time.time()
         object_detections = weapon_detector.detect_objects(frame)
+        if object_detections:
+            print("[WEAPON DETECTIONS]", object_detections)
         obj_ms = (time.time() - t2) * 1000 if weapon_detector.is_available() else None
 
         risk_score, risk_label, breakdown = compute_risk(final_count, zone_area_sqm=ZONE_AREA_SQM)
-
+        
         annotated = r.plot()
-        colors = {"Safe": (0, 255, 0), "Warning": (0, 200, 255),
-                  "High Risk": (0, 140, 255), "Critical": (0, 0, 255)}
-        cv2.putText(annotated, f"Count: {final_count} ({count_source})", (16, 34),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
-        cv2.putText(annotated, f"Risk: {risk_score:.0f}% ({risk_label})", (16, 66),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, colors.get(risk_label, (255, 255, 255)), 2)
+
+        # Draw weapon detections on the same live frame
+        for obj in object_detections:
+            bbox = obj.get("bbox", {})
+            x1 = int(bbox.get("x1", 0))
+            y1 = int(bbox.get("y1", 0))
+            x2 = int(bbox.get("x2", 0))
+            y2 = int(bbox.get("y2", 0))
+
+            label = f'{obj["className"]} {obj["confidence"]:.2f}'
+
+            cv2.rectangle(
+                annotated, (x1, y1), (x2, y2), (0, 0, 255), 2
+            )
+            cv2.putText(
+                annotated,
+                label,
+                (x1, max(y1 - 10, 20)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.6,
+                (0, 0, 255),
+                2,
+            )
+
+        colors = {
+            "Safe": (0, 255, 0),
+            "Warning": (0, 200, 255),
+            "High Risk": (0, 140, 255),
+            "Critical": (0, 0, 255),
+        }
+
+        cv2.putText(
+            annotated, f"Count: {final_count} ({count_source})", (16, 34),
+            cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2
+        )
+        cv2.putText(
+            annotated, f"Risk: {risk_score:.0f}% ({risk_label})", (16, 66),
+            cv2.FONT_HERSHEY_SIMPLEX, 0.8,
+            colors.get(risk_label, (255, 255, 255)), 2
+        )
+
         if not CSRNET_AVAILABLE:
-            cv2.putText(annotated, "CSRNet: unavailable", (16, 98),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 165, 255), 1)
-        ok, jpeg = cv2.imencode(".jpg", annotated, [cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY])
-        ok_raw, raw_jpeg = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY])
+            cv2.putText(
+                annotated, "CSRNet: unavailable", (16, 98),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 165, 255), 1
+            )
+
+        ok, jpeg = cv2.imencode(
+            ".jpg", annotated, [cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY]
+        )
+        ok_raw, raw_jpeg = cv2.imencode(
+            ".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY]
+        )
+
+
 
         result = {
             "cameraId": ZONE_NAME,

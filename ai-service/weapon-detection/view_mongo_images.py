@@ -18,13 +18,18 @@ documents = collection.find()
 count = 0
 for doc in documents:
     detection_num = doc.get("detection_number", "unknown")
-    class_name = doc.get("class_name", "unknown")
-    date_str = doc.get("date", "unknown")
     image_base64 = doc.get("screenshot_base64")
+
+    # Naya format: detections list. Purana format: seedha class_name
+    if "detections" in doc:
+        classes = sorted({d["class_name"] for d in doc["detections"]})
+        class_label = "-".join(classes)
+    else:
+        class_label = doc.get("class_name", "unknown")
 
     if image_base64:
         image_data = base64.b64decode(image_base64)
-        filename = f"{output_folder}/detection_{detection_num}_{class_name}.jpg"
+        filename = f"{output_folder}/detection_{detection_num}_{class_label}.jpg"
         with open(filename, "wb") as f:
             f.write(image_data)
         count += 1

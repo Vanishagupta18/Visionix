@@ -25,6 +25,8 @@ def try_load(weights_path: str) -> bool:
     try:
         from ultralytics import YOLO
         _model = YOLO(weights_path)
+        print("[LOADED MODEL PATH]", os.path.abspath(weights_path))
+        print("[LOADED MODEL CLASSES]", _model.names)
         _available = True
         print(f"[Visionix AI] Weapon/object model loaded from {weights_path}")
     except Exception as e:
@@ -43,7 +45,7 @@ def detect_objects(frame) -> list:
     if not _available or _model is None:
         return []
 
-    results = _model(frame, verbose=False)
+    results = _model(frame, conf=0.60, verbose=False)
     detections = []
     for box in results[0].boxes:
         cls_id = int(box.cls[0])
