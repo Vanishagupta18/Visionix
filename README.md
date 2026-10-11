@@ -1,41 +1,75 @@
-# Visionix — AI Crowd & Weapon Monitoring System
+# Visionix — AI Crowd Monitoring System
 
-AI-powered monitoring system that estimates crowd density from video/CCTV
-footage in real time, detects weapons (gun, knife, hazardous objects) from a
-live camera feed, and raises alerts before dangerous situations escalate.
+AI-powered crowd safety system that analyses video/CCTV footage in real time,
+estimates crowd density, classifies risk levels and raises alerts **before**
+dangerous overcrowding occurs. Visionix also includes a weapon detection
+module that flags guns, knives and other hazardous objects from a live camera
+feed.
 
-This repository is split into three services:
+## Problem
+
+Large gatherings (stations, events, public places) are hard to watch manually.
+Overcrowding and security threats are usually noticed only after they become
+dangerous. Visionix watches the video feeds continuously and warns operators
+early, so they can act in time.
+
+## Key Features
+
+- **Crowd density estimation** from video using CSRNet, with a people count per frame
+- **Risk classification** into Safe / Crowded / Dangerous, with tier switching between monitoring modes
+- **Person detection** using YOLO
+- **Weapon detection** (gun, knife, hazard object) from live camera feeds
+- **Alerts and storage** — readings, alerts and detections are saved in MongoDB
+- **Live dashboard** with zone status, trend graphs and an alerts panel (React)
+
+## System Architecture
+
+```
+Video / CCTV / Camera feed
+          │
+          ▼
+  ai-service (Python, FastAPI)
+  - CSRNet crowd density + count
+  - Risk monitoring and tier switching
+  - YOLO person detection
+  - Weapon detection (YOLOv8)
+          │
+          ▼
+  backend (Node.js, Express, MongoDB)
+  - saves readings, alerts and detections
+  - checks alert rules
+  - pushes live updates via Socket.io
+          │
+          ▼
+  frontend (React dashboard)
+  - live zone status
+  - trend graphs
+  - alerts panel
+```
+
+## Repository Structure
 
 ```
 visionix/
-├── ai-service/          → Python AI code
-│   ├── main.py, model.py, utils.py   → FastAPI + CSRNet (crowd density)
-│   ├── risk/                         → crowd risk monitoring & tier switching
+├── ai-service/            → Python AI services
+│   ├── main.py, model.py, utils.py   → FastAPI app + CSRNet crowd density
+│   ├── risk/                         → crowd risk monitoring and tier switching
 │   ├── yolo/                         → YOLO person detector
 │   ├── weapon_detector.py            → weapon detection hook for the service
-│   └── weapon-detection/             → YOLOv8 weapon detection module (see below)
-├── backend/             → Node.js + Express + MongoDB (main API, alerts, storage)
-├── frontend/            → React (dashboard UI)
+│   └── weapon-detection/             → weapon detection module (see its folder)
+├── backend/               → Node.js + Express + MongoDB (API, alerts, storage)
+├── frontend/              → React dashboard
 └── README.md
 ```
 
-## How the pieces connect
+## Tech Stack
 
-```
-Video/Frame → ai-service (FastAPI, CSRNet + YOLO) → count + status / weapon alerts
-                        │
-                        ▼
-                 backend (Node/Express)
-                 - saves readings and detections to MongoDB
-                 - checks alert rules
-                 - pushes updates via Socket.io
-                        │
-                        ▼
-                 frontend (React dashboard)
-                 - live zone status
-                 - trend graphs
-                 - alerts panel
-```
+| Layer | Technologies |
+|-------|--------------|
+| AI | Python, FastAPI, PyTorch, CSRNet, YOLOv8 (Ultralytics), OpenCV |
+| Backend | Node.js, Express, MongoDB (Atlas), Socket.io |
+| Frontend | React |
+| Data / training | Roboflow datasets for weapon detection |
 
 ## Getting Started (Order Matters)
 
@@ -43,98 +77,41 @@ Video/Frame → ai-service (FastAPI, CSRNet + YOLO) → count + status / weapon 
 2. **Backend second** — see `backend/README.md`.
 3. **Frontend last** — see `frontend/README.md`.
 
-## Weapon Detection Module
+Each service reads its settings from its own `.env` file. Copy the
+`.env.example` in that folder and fill in your own values. Never commit a
+real `.env`.
 
-Location: `ai-service/weapon-detection/` (this is the only weapon-detection
-folder in the repo).
+## Modules
 
-A YOLOv8 model trained on a Roboflow dataset. It detects 3 classes:
+### Crowd Density and Risk Monitoring
+Estimates the number of people in a frame with CSRNet and converts it into a
+Safe / Crowded / Dangerous status. The `risk/` folder holds the monitoring and
+tier switching logic, and `yolo/` the person detector.
 
-| ID | Class           |
-|----|-----------------|
-| 0  | `gun`           |
-| 1  | `hazard_object` |
-| 2  | `knife`         |
+### Weapon Detection
+A YOLOv8 model detects three classes: `gun`, `hazard_object` and `knife`.
+It works on live camera feeds (for example a phone running IP Webcam), video
+files and YouTube videos, and saves detections to MongoDB. The trained weights
+are at `ai-service/weapon-detection/models/best.pt`. Setup, live testing and
+retraining steps are in the `ai-service/weapon-detection/` folder.
 
-### What's inside
+### Backend and Alerts
+Receives results from the AI service, stores them in MongoDB, applies alert
+rules and pushes live updates to the dashboard.
 
-| File | Purpose |
-|------|---------|
-| `live_test.py` | Live detection from a phone camera (IP Webcam) with auto-reconnect; saves detections to MongoDB |
-| `live_wweapon_detection.py` | Live detection script using the Roboflow dataset and trained model |
-| `weapon_detect_video.py` | Run detection on a video file |
-| `weapon_detect_youtube.py` | Run detection on a YouTube video |
-| `retrain_weapon_detection.py` | Download a Roboflow dataset version and retrain from pretrained `yolov8n.pt` |
-| `retrain_model_v2.py`, `retrain_model_run4.py`, `resume_training.py` | Earlier retraining / resume scripts |
-| `view_boxes.py` | Visualise labelled boxes from the dataset |
-| `view_mongo_images.py` | View detection images saved in MongoDB |
-| `data.yaml` | Dataset config |
-| `models/best.pt` | Trained weights (about 6 MB, included in the repo) |
-| `.env.example` | Template for required environment variables |
+### Dashboard
+Shows live zone status, trend graphs and the alerts panel.
 
-### Setup
+## Project Phases
 
-1. Install dependencies:
-   ```bash
-   pip install ultralytics roboflow opencv-python pymongo python-dotenv torch pyyaml
-   ```
-2. Create a `.env` file (copy `.env.example`) in the folder you run the scripts
-   from, and fill in your own values:
-   ```
-   MONGO_URI=mongodb+srv://USER:PASSWORD@CLUSTER.mongodb.net/
-   ROBOFLOW_API_KEY=your_key_here
-   ```
-   Use only **one** `MONGO_URI` line. Prefer a password with letters and
-   numbers only, so the URI does not need escaping.
-3. The trained model is at `ai-service/weapon-detection/models/best.pt`.
+**Phase 1 (core):** Generic, location-agnostic crowd monitoring — upload or
+select a video, get density plus Safe/Crowded/Dangerous classification, live
+dashboard updates, trend graph and basic alerting.
 
-### Run live detection (phone as camera)
+**Added:** Weapon detection from live camera feeds with detections stored in
+MongoDB.
 
-1. Install **IP Webcam** on an Android phone and tap **Start server**.
-2. Keep the phone and the laptop on the **same Wi-Fi** network.
-3. In `live_test.py` set the stream URL to the one shown in the app:
-   ```python
-   URL = "http://<phone-ip>:8080/video"
-   ```
-4. Run:
-   ```bash
-   python live_test.py
-   ```
-   If the stream drops, the script reconnects automatically. Lower the
-   resolution and FPS in the app for a smoother stream.
-
-### Retrain the model
-
-1. Edit the settings at the top of `retrain_weapon_detection.py`
-   (`NEW_DATASET_VERSION`, `RUN_NAME`, `EPOCHS`, `IMGSZ`, `BATCH`, `PATIENCE`).
-2. Make sure `ROBOFLOW_API_KEY` is set in your `.env`.
-3. Run:
-   ```bash
-   python retrain_weapon_detection.py
-   ```
-   Training starts from the pretrained `yolov8n.pt` (not the old `best.pt`)
-   and the best weights are saved in the run folder printed at the end.
-
-### Security notes
-
-- **Never commit `.env` or hard-code keys.** `ai-service/weapon-detection/.gitignore`
-  already ignores `.env`.
-- Read secrets only through environment variables, for example
-  `os.getenv("ROBOFLOW_API_KEY")`.
-- Use a limited database user (read/write to your database) for the app,
-  not an admin user.
-- If a key or password is ever exposed, rotate it immediately.
-
-## Current Project Phase
-
-**Phase 1:** Generic, location-agnostic crowd monitoring — upload/select a
-video, get density + Safe/Crowded/Dangerous classification, live dashboard
-updates, trend graph, and basic alerting.
-
-**Weapon detection (added):** Live weapon detection (gun / knife / hazard
-object) with detections stored in MongoDB.
-
-**Phase 2 (later, if time permits):** Multi-zone / multi-camera support —
+**Phase 2 (later, if time permits):** Multi-zone and multi-camera support —
 monitor several video sources at once and compare zones on one dashboard.
 
 **Phase 3 (optional/bonus):** Contextual framing (e.g. named sample zones),
@@ -147,5 +124,13 @@ a real integration with any external authority.
   (too large for GitHub without Git LFS). Place it in `ai-service/weights/`.
   See `ai-service/README.md`.
 - **Weapon detection (YOLOv8):** `ai-service/weapon-detection/models/best.pt`
-  **is** included (about 6 MB). `ai-service/yolov8n.pt` is the base
+  is included in the repo (about 6 MB). `ai-service/yolov8n.pt` is the base
   pretrained model.
+
+## Security Notes
+
+- Keep all keys and database passwords in `.env` files and read them through
+  environment variables. Never hard-code them or commit them.
+- Use a limited database user (read/write on your database) for the app, not
+  an admin user.
+- If a key or password is ever exposed, rotate it immediately.
