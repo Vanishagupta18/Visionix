@@ -23,10 +23,10 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
 model = YOLO(str(BASE_DIR / "models" / "best.pt"))
+
 print("Classes:", model.names)
 
 URL = "http://172.27.22.217:8080/video"
-
 def open_cam():
     c = cv2.VideoCapture(URL)
     c.set(cv2.CAP_PROP_BUFFERSIZE, 1)

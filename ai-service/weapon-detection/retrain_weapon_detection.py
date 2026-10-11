@@ -1,4 +1,8 @@
 from roboflow import Roboflow
+
+=======
+﻿from roboflow import Roboflow
+>>>>>>> origin/main
 from ultralytics import YOLO
 from dotenv import load_dotenv
 import os
@@ -95,7 +99,6 @@ def main():
     )
 
     print("Training complete. Best model at:", results.save_dir)
-
 
 if __name__ == "__main__":
     main()

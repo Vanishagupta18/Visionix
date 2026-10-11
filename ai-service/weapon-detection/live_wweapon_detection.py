@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+
 load_dotenv()
 from roboflow import Roboflow
 from ultralytics import YOLO
